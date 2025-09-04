@@ -59,7 +59,7 @@ def create_table(connection):
         CREATE TABLE IF NOT EXISTS user_data (
             user_id CHAR(36) NOT NULL PRIMARY KEY DEFAULT (UUID()),
             name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
             age DECIMAL NOT NULL
         )
         """
