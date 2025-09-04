@@ -1,5 +1,6 @@
-import mysql.connector
+#!/usr/bin/python3
 
+import mysql.connector
 
 def connect_db():
     """Connects to the mysql database server
@@ -11,7 +12,7 @@ def connect_db():
     connection = mysql.connector.connect(
         host = "localhost",
         user = "root",
-        password = "H07a12r94p"
+        password = "root"
     )
     
     return connection
@@ -39,7 +40,7 @@ def connect_to_prodev():
     connection = mysql.connector.connect(
         host = "localhost",
         user = "root",
-        password = "H07a12r94p",
+        password = "root",
         database = "ALX_prodev"
     )
     return connection
