@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 import mysql.connector
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 def stream_users():
     """Streams users from database
@@ -11,13 +14,13 @@ def stream_users():
     """
     
     connection = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="H07a12r94p",
-        database="ALX_prodev"
+        host= "localhost",
+        user= os.getenv("DBUSER"),
+        password= os.getenv("DBPASS"),
+        database= "ALX_prodev"
     )
     
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     cursor.execute("SELECT * FROM user_data")
     for row in cursor:
         yield row

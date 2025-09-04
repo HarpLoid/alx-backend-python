@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 
 import mysql.connector
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 def connect_db():
     """Connects to the mysql database server
@@ -11,8 +15,8 @@ def connect_db():
 
     connection = mysql.connector.connect(
         host = "localhost",
-        user = "root",
-        password = "root"
+        user = os.getenv("DBUSER"),
+        password = os.getenv("DBPASS")
     )
     
     return connection
@@ -39,8 +43,8 @@ def connect_to_prodev():
 
     connection = mysql.connector.connect(
         host = "localhost",
-        user = "root",
-        password = "root",
+        user = os.getenv("DBUSER"),
+        password = os.getenv("DBPASS"),
         database = "ALX_prodev"
     )
     return connection
