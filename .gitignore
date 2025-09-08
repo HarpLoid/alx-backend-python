@@ -3,3 +3,4 @@ user_data.csv
 *main.py
 __pycache__
 .env
+*.db
