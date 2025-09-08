@@ -1,13 +1,18 @@
 import sqlite3
 import functools
+from datetime import datetime
 
 #### decorator to log SQL queries
 
 def log_queries(func):
     @functools.wraps(func)
     def wrapper_log_queries(query):
-        print(query)
-        return func(query)
+        print(f"[{datetime.now()}] Executing: {query}")
+        try:
+            return func(query)
+        except Exception as e:
+            print(f"[{datetime.now()}] Error: {e}")
+            raise
     return wrapper_log_queries
 
 @log_queries
