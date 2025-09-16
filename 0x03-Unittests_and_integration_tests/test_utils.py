@@ -13,8 +13,8 @@ class TestAccessNestedMap(unittest.TestCase):
     """ Test for access_nested_map
     """
     @parameterized.expand([
-        ({"a": 1}, ("a",), 1)
-        ({"a": {"b": 2}}, ("a",), {"b": 2})
+        ({"a": 1}, ("a",), 1),
+        ({"a": {"b": 2}}, ("a",), {"b": 2}),
         ({"a": {"b": 2}}, ("a", "b"), 2)
     ])
     def test_access_nested_map(self, nested_map, path, expected):
@@ -23,19 +23,20 @@ class TestAccessNestedMap(unittest.TestCase):
         self.assertEqual(access_nested_map(nested_map, path), expected)
     
     @parameterized.expand([
-        ({}, ("a",), KeyError)
+        ({}, ("a",), KeyError),
         ({"a": 1}, ("a", "b"), KeyError)
     ])
-    def test_access_nested_map_exception(self, nested_map, path, expected):
+    def test_access_nested_map_exception(self, nested_map, path, exception):
         """ Test access_nested_map raises KeyError on wrong path
         """
-        self.assertRaises(access_nested_map(nested_map, path), expected)
+        with self.assertRaises(exception):
+            access_nested_map(nested_map, path)
 
 class TestGetJson(unittest.TestCase):
     """ Tests GetJson
     """
     @parameterized.expand([
-        ("http://example.com", {"payload": True})
+        ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False})
     ])
     def test_get_json(self, test_url, test_payload):
