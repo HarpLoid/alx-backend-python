@@ -12,7 +12,7 @@ from utils import access_nested_map, get_json, memoize
 class TestAccessNestedMap(unittest.TestCase):
     """ Test for access_nested_map
     """
-    @paramiterized.expand([
+    @parameterized.expand([
         ({"a": 1}, ("a",), 1)
         ({"a": {"b": 2}}, ("a",), {"b": 2})
         ({"a": {"b": 2}}, ("a", "b"), 2)
@@ -22,7 +22,7 @@ class TestAccessNestedMap(unittest.TestCase):
         """
         self.assertEqual(access_nested_map(nested_map, path), expected)
     
-    @paramiterized.expand([
+    @parameterized.expand([
         ({}, ("a",), KeyError)
         ({"a": 1}, ("a", "b"), KeyError)
     ])
@@ -34,7 +34,7 @@ class TestAccessNestedMap(unittest.TestCase):
 class TestGetJson(unittest.TestCase):
     """ Tests GetJson
     """
-    @paramiterized.expand([
+    @parameterized.expand([
         ("http://example.com", {"payload": True})
         ("http://holberton.io", {"payload": False})
     ])
