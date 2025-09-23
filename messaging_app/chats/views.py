@@ -3,7 +3,11 @@ from rest_framework import viewsets, filters
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import MessageFilter
 from .models import Message, Conversation
+from .permissions import IsParticipantOfConversation
+from .pagination import MessagePagination
 from .serializers import MessageSerializer, ConversationSerializer
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -14,6 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
     from .serializers import UserSerializer
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
@@ -21,8 +26,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     
     def perform_create(self, serializer):
         serializer.save(participants_id=self.request.user)
@@ -33,10 +37,11 @@ class MessageViewSet(viewsets.ModelViewSet):
     """
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    filterset_class = MessageFilter
     search_fields = ['message_body']
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    pagination_class = MessagePagination
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     
     def perform_create(self, serializer):
         serializer.save(sender_id=self.request.user)
