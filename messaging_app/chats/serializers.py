@@ -23,7 +23,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     total_messages = serializers.SerializerMethodField()
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'messages', 'created_at']
+        fields = ['conversation_id', 'participants', 'messages', 'created_at', 'total_messages']
         read_only_fields = ['conversation_id', 'created_at']
     
     def get_total_messages(self, obj):
