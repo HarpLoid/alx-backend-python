@@ -1,21 +1,22 @@
-from django.shortcuts import render
-from rest_framework import viewsets, filters
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
-from django_filters.rest_framework import DjangoFilterBackend
+from .models import User
 from .filters import MessageFilter
+from django.shortcuts import render
+from .serializers import UserSerializer
 from .models import Message, Conversation
-from .permissions import IsParticipantOfConversation
 from .pagination import MessagePagination
+from rest_framework.response import Response
+from rest_framework import viewsets, filters
+from .permissions import IsParticipantOfConversation
+from rest_framework.permissions import IsAuthenticated
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import MessageSerializer, ConversationSerializer
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 
 class UserViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing user instances.
     """
-    from .models import User
-    from .serializers import UserSerializer
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
@@ -26,7 +27,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    permission_classes = [IsParticipantOfConversation]
     
     def perform_create(self, serializer):
         serializer.save(participants_id=self.request.user)
@@ -41,20 +42,17 @@ class MessageViewSet(viewsets.ModelViewSet):
     filterset_class = MessageFilter
     search_fields = ['message_body']
     pagination_class = MessagePagination
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    permission_classes = [IsParticipantOfConversation]
     
+    def get_queryset(self):
+        # Retrieve the conversation_id from the URL and filter messages
+        conversation_id = self.kwargs.get('conversation_id')
+        return Message.objects.filter(conversation_id=conversation_id)
+
     def perform_create(self, serializer):
-        serializer.save(sender_id=self.request.user)
-    
-    def create(self, request, *args, **kwargs):
-        conversation_id = request.data.get('conversation_id')
-        try:
-            conversation = Conversation.objects.get(conversation_id=conversation_id)
-        except Conversation.DoesNotExist:
-            return Response({'error': 'Conversation not found.'}, status=404)
-        
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=201)
+        # The conversation object is available via a nested router's lookup
+        conversation = Conversation.objects.get(
+            id=self.kwargs.get('conversation_id')
+        )
+        serializer.save(sender_id=self.request.user, conversation=conversation)
     
