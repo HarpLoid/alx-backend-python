@@ -76,8 +76,10 @@ class RolepermissionMiddleware:
         """
         if not request.user.is_authenticated:
             return HttpResponse("You must be logged in to access this resource.", status=401)
+
+        user_role = getattr(request.user, 'role', None)
         
-        if not request.user.role in ['admin', 'moderator']:
+        if not user_role in ['admin', 'moderator']:
             return HttpResponse("You do not have permission to access this resource.", status=403)
         
         response = self.get_response(request)
