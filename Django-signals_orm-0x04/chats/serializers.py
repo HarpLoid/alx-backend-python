@@ -20,14 +20,14 @@ class MessageSerializer(serializers.ModelSerializer):
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True, source='participants_id')
     messages = MessageSerializer(many=True, read_only=True)
-    # total_messages = serializers.SerializerMethodField()
+    total_messages = serializers.SerializerMethodField()
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'messages', 'created_at']#, 'total_messages']
+        fields = ['conversation_id', 'participants', 'messages', 'created_at', 'total_messages']
         read_only_fields = ['conversation_id', 'created_at']
     
-    # def get_total_messages(self, obj):
-    #     return obj.messages.count()
+    def get_total_messages(self, obj):
+        return obj.messages.count()
     
     def validate(self, data):
         """
