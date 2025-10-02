@@ -28,7 +28,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     @action(detail=False, methods=['delete'], permission_classes=[permissions.IsAuthenticated])
-    def delete_account(self, request):
+    def delete_user(self, request):
         """
         Allows the currently authenticated user to delete their account.
         """
