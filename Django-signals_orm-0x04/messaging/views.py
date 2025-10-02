@@ -53,9 +53,11 @@ class MessageViewSet(viewsets.ViewSet):
 
         data = []
         for msg in messages:
+            id = msg.id
+            sender = request.user
             data.append({
-                'id': msg.id,
-                'sender': request.user,
+                'id': id,
+                'sender': sender,
                 'content': msg.content,
                 'sent_at': msg.sent_at,
                 'replies': get_threaded_replies(msg)
