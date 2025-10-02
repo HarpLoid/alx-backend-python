@@ -1,19 +1,6 @@
 from django.db import models
-from uuid import uuid4
 from chats.models import User
-
-class UnreadMessageManager(models.Manager):
-    def for_user(self, user):
-        """
-        Return only unread messages for a specific user.
-        Optimized to fetch only required fields.
-        """
-        return (
-            self.get_queryset()
-            .filter(receiver=user, read=False)
-            .only('id', 'sender', 'content', 'sent_at')
-            .select_related('sender')
-        )
+from .managers import UnreadMessageManager
 
 class Message(models.Model):
     """

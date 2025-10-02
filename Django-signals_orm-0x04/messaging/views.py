@@ -5,7 +5,27 @@ from .models import Message
 from .utils import get_threaded_replies
 from chats.models import User
 from chats.serializers import UserSerializer
+from django.views.decorators.cache import cache_page
+from rest_framework.decorators import api_view
 from .serializers import MessageSerializer, MessageHistorySerializer
+
+@api_view(['GET'])
+@cache_page(60)
+def conversation_messages(request, conversation_id):
+    messages = Message.objects.filter(conversation_id=conversation_id)\
+                               .select_related('sender')\
+                               .order_by('sent_at')
+
+    data = [
+        {
+            "id": msg.id,
+            "sender": msg.sender.email,
+            "content": msg.content,
+            "sent_at": msg.sent_at,
+        }
+        for msg in messages
+    ]
+    return Response(data)
 
 
 class MessageViewSet(viewsets.ModelViewSet):
@@ -70,12 +90,14 @@ class InboxViewSet(viewsets.ViewSet):
 
     def list(self, request):
         # Fetch only unread messages for the logged-in user
-        unread_messages = Message.unread.for_user(request.user)
+        unread_messages = Message.unread.unread_for_user(request.user)\
+            .select_related("sender") \
+            .only("id", "sender", "content", "created_at")
 
         data = [
             {
                 "id": msg.id,
-                "sender": msg.sender.email,
+                "sender": msg.sender,
                 "content": msg.content,
                 "sent_at": msg.sent_at,
                 "read": msg.read,

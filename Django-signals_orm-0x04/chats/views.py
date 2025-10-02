@@ -10,8 +10,6 @@ from .permissions import IsParticipantOfConversation
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import MessageSerializer, ConversationSerializer
-from django.views.decorators.cache import cache_page
-from rest_framework.decorators import api_view
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -74,21 +72,3 @@ class MessageViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(sender=self.request.user, conversation=conversation)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-@api_view(['GET'])
-@cache_page(60)
-def conversation_messages(request, conversation_id):
-    messages = Message.objects.filter(conversation_id=conversation_id)\
-                               .select_related('sender')\
-                               .order_by('sent_at')
-
-    data = [
-        {
-            "id": msg.id,
-            "sender": msg.sender.email,
-            "content": msg.content,
-            "sent_at": msg.sent_at,
-        }
-        for msg in messages
-    ]
-    return Response(data)
