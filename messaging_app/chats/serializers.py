@@ -37,5 +37,3 @@ class ConversationSerializer(serializers.ModelSerializer):
         if request and request.user in data.get('participants_id', []):
             raise serializers.ValidationError("You cannot create a conversation with yourself.")
         return data
-
-
