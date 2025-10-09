@@ -30,7 +30,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsParticipantOfConversation]
     
     def perform_create(self, serializer):
-        serializer.save(participants_id=self.request.user)
+        conversation = serializer.save()
+        
+        conversation.participants_id.add(self.request.user)
 
 class MessageViewSet(viewsets.ModelViewSet):
     """

@@ -33,9 +33,11 @@ class User(AbstractUser):
         related_name='chats_users_permissions_set', # Unique name for this relationship
         related_query_name='chats_user',
     )
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.username
+        return self.email
 
 class Message(models.Model):
     message_id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -48,7 +50,8 @@ class Message(models.Model):
 
 class Conversation(models.Model):
     conversation_id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    participants_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    # participants_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    participants_id = models.ManyToManyField(User, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
