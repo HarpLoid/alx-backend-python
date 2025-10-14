@@ -7,6 +7,10 @@ if ! command -v minikube >/dev/null 2>&1; then
     rm minikube-linux-amd64
 fi
 # Start a Kubernetes cluster (minikube)
-minikube start --driver=docker 
+minikube start --driver=docker
+# Verifies the cluster is running
+echo "Checking if cluster is running ..."
+kubectl cluster-info
 # Get available pods
+echo "Getting pods in cluster"
 kubectl get pods
