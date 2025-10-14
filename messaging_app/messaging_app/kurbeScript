@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Install minikube
+if ! command -v minikube >/dev/null 2>&1; then
+    curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    sudo install minikube-linux-amd64 /usr/local/bin/minikube
+    rm minikube-linux-amd64
+fi
+# Start a Kubernetes cluster (minikube)
+minikube start --driver=docker
+# Verifies the cluster is running
+echo "Checking if cluster is running ..."
+kubectl cluster-info
+# Get available pods
+echo "Getting pods in cluster"
+kubectl get pods
