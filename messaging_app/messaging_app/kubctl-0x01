@@ -1,0 +1,48 @@
+#!/usr/bin/bash
+
+REPLICAS=3
+DEPLOYMENT=messaging-app
+
+CURRENT_SCALE=$(kubectl get deployment $DEPLOYMENT -o jsonpath='{.status.replicas}')
+
+if [ "$CURRENT_SCALE" != "$REPLICAS" ]; then
+# Scale Django app to 3 replicas
+    echo "Scaling deployment to ${REPLICAS} replicas ..."
+    kubectl scale deployment $DEPLOYMENT --replicas=$REPLICAS
+fi
+# Verify that the pods are running
+echo "Verifying that the pods are running ..."
+kubectl get pods -l app=$DEPLOYMENT
+# Wait until all pods are running
+kubectl wait --for=condition=available deployment/$DEPLOYMENT --timeout=200s
+
+kubectl get pods -l app=$DEPLOYMENT
+
+# Load testing using wrk
+# to see how the scaled app handles traffic
+SERVICE_NAME="messaging-app-service"
+PORT=8000
+DURATION="30s"
+THREADS=4
+CONNECTIONS=50
+
+echo "Starting wrk load test on $SERVICE_NAME:$PORT ..."
+
+kubectl run wrk \
+  --image=williamyeh/wrk \
+  -it --rm --restart=Never \
+  -- -t${THREADS} -c${CONNECTIONS} -d${DURATION} http://${SERVICE_NAME}:${PORT}/
+
+# Check if monitoring addon is available
+echo "Checking for metric-server ..."
+if ! kubectl get deployment metric-server -n kube-system >/dev/null 2>&1; then
+    echo "Metric-server enabled ..."
+    # Monitor pods in the Django app
+    echo "Monitoring pods ..."
+    kubectl top pods -l app=messaging-app
+else
+    echo "Enabling metric-server ..."
+    minikube addons enable metrics-server
+fi
+
+
