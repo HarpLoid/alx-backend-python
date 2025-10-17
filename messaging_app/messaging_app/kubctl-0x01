@@ -10,6 +10,8 @@ if [ "$CURRENT_SCALE" != "$REPLICAS" ]; then
     echo "Scaling deployment to ${REPLICAS} replicas ..."
     kubectl scale deployment $DEPLOYMENT --replicas=$REPLICAS
 fi
+echo
+echo "----------------------------------------------"
 # Verify that the pods are running
 echo "Verifying that the pods are running ..."
 kubectl get pods -l app=$DEPLOYMENT
@@ -17,7 +19,8 @@ kubectl get pods -l app=$DEPLOYMENT
 kubectl wait --for=condition=available deployment/$DEPLOYMENT --timeout=200s
 
 kubectl get pods -l app=$DEPLOYMENT
-
+echo
+echo "----------------------------------------------"
 # Load testing using wrk
 # to see how the scaled app handles traffic
 SERVICE_NAME="messaging-app-service"
@@ -32,11 +35,14 @@ kubectl run wrk \
   --image=williamyeh/wrk \
   -it --rm --restart=Never \
   -- -t${THREADS} -c${CONNECTIONS} -d${DURATION} http://${SERVICE_NAME}:${PORT}/
-
+echo
+echo "----------------------------------------------"
 # Check if monitoring addon is available
 echo "Checking for metric-server ..."
 if ! kubectl get deployment metric-server -n kube-system >/dev/null 2>&1; then
     echo "Metric-server enabled ..."
+    echo
+    echo "----------------------------------------------"
     # Monitor pods in the Django app
     echo "Monitoring pods ..."
     kubectl top pods -l app=messaging-app

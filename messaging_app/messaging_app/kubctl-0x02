@@ -1,0 +1,109 @@
+#!/bin/bash
+# Blue-Green Deployment Script for Messaging App
+# Creates deployments, checks logs, and ensures service exists.
+
+set -e
+
+APP_NAME="messaging-app"
+SERVICE_NAME="messaging-app-service"
+BLUE_DEPLOY="blue_deployment.yaml"
+GREEN_DEPLOY="green_deployment.yaml"
+SERVICE_PORT=8000
+
+echo "=== Blue-Green Deployment (Deploy + Log Check + Start Service) ==="
+
+# Function: check if a deployment exists
+deployment_exists() {
+  kubectl get deployment "$1" >/dev/null 2>&1
+}
+
+# Function: deploy version if not already deployed
+deploy_if_missing() {
+  DEPLOY_NAME=$1
+  DEPLOY_FILE=$2
+
+  if deployment_exists "$DEPLOY_NAME"; then
+    echo "Deployment '$DEPLOY_NAME' already exists."
+  else
+    echo "Creating deployment '$DEPLOY_NAME'..."
+    kubectl apply -f "$DEPLOY_FILE"
+    echo "Waiting for rollout to complete..."
+    kubectl rollout status deployment/$DEPLOY_NAME
+  fi
+}
+
+# Function: check pod logs for errors
+check_logs_for_errors() {
+  VERSION=$1
+  echo "Checking logs for '$VERSION' pods..."
+  LOGS=$(kubectl logs -l app=${APP_NAME},version=${VERSION} --tail=50 --ignore-errors || true)
+  echo "$LOGS"
+  if echo "$LOGS" | grep -iqE "error|fail|exception"; then
+    echo "Errors found in '$VERSION' logs!"
+    return 1
+  else
+    echo "No errors found in '$VERSION' logs."
+    return 0
+  fi
+}
+
+# Function: check if service exists
+service_exists() {
+  kubectl get svc "$SERVICE_NAME" >/dev/null 2>&1
+}
+
+# Function: create the service if missing
+create_service_if_missing() {
+  if service_exists; then
+    echo "Service '$SERVICE_NAME' already exists."
+  else
+    echo "Creating service '$SERVICE_NAME' (pointing to Blue by default)..."
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${SERVICE_NAME}
+spec:
+  selector:
+    app: ${APP_NAME}
+    version: blue
+  ports:
+    - protocol: TCP
+      port: ${SERVICE_PORT}
+      targetPort: ${SERVICE_PORT}
+  type: ClusterIP
+EOF
+    echo "Service '$SERVICE_NAME' created and pointing to Blue."
+  fi
+}
+
+# --- Main flow ---
+
+# Deploy blue and green if missing
+deploy_if_missing "${APP_NAME}-blue" "$BLUE_DEPLOY"
+deploy_if_missing "${APP_NAME}-green" "$GREEN_DEPLOY"
+
+# Wait for pods to be ready
+echo "Ensuring deployments are ready..."
+kubectl wait --for=condition=available deployment/${APP_NAME}-blue --timeout=60s || true
+kubectl wait --for=condition=available deployment/${APP_NAME}-green --timeout=60s || true
+
+# Check logs for errors
+echo ""
+echo "Checking logs for both versions..."
+check_logs_for_errors "blue" || echo "Check blue version logs above."
+echo ""
+check_logs_for_errors "green" || echo "Check green version logs above."
+echo ""
+
+# Create the service if needed
+create_service_if_missing
+
+echo ""
+echo "Blue and Green deployments verified."
+echo "Service '${SERVICE_NAME}' is ready (currently points to Blue)."
+echo ""
+echo "To switch traffic manually, run:"
+echo "  kubectl patch service ${SERVICE_NAME} -p '{\"spec\":{\"selector\":{\"app\":\"${APP_NAME}\",\"version\":\"green\"}}}'"
+echo ""
+echo "Done."

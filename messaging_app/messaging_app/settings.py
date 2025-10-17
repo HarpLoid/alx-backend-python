@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-heg%n@%huv1)p9tu==q@6ws4kuv2&r8g+%lpueg4ldrx6n(ya1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -93,22 +93,22 @@ WSGI_APPLICATION = 'messaging_app.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("MYSQL_DB", "messaging_app_db"),
-        "USER": os.environ.get("MYSQL_USER", "messageuser"),
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
-        "HOST": os.environ.get("MYSQL_HOST", "db"),
-        "PORT": os.environ.get("MYSQL_PORT", "3306"),
-        "OPTIONS": {
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-            "charset": "utf8mb4",
-        },
-    }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # "default": {
+    #     "ENGINE": "django.db.backends.mysql",
+    #     "NAME": os.environ.get("MYSQL_DB", "messaging_app_db"),
+    #     "USER": os.environ.get("MYSQL_USER", "messageuser"),
+    #     "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
+    #     "HOST": os.environ.get("MYSQL_HOST", "db"),
+    #     "PORT": os.environ.get("MYSQL_PORT", "3306"),
+    #     "OPTIONS": {
+    #         "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+    #         "charset": "utf8mb4",
+    #     },
     # }
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
