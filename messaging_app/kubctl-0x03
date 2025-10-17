@@ -1,0 +1,66 @@
+#!/bin/bash
+# Perform a rolling update, monitor it, and test for downtime.
+
+set -e
+
+APP_NAME="messaging-app-blue"
+DEPLOY_FILE="blue_deployment.yaml"
+# SERVICE_NAME="messaging-app-service"
+# NAMESPACE="default"
+SERVICE_PORT=8000
+CHECK_URL="http://localhost:${SERVICE_PORT}"
+ROLL_CHECK_INTERVAL=2   # seconds between curl checks
+ROLL_TIMEOUT=120        # max rollout wait time
+
+echo "=== Starting Rolling Update for ${APP_NAME} ==="
+
+# 1️⃣ Apply updated deployment
+echo "Applying updated deployment from ${DEPLOY_FILE}..."
+kubectl apply -f "${DEPLOY_FILE}"
+
+# 2️⃣ Trigger rolling update
+echo "Monitoring rollout progress..."
+kubectl rollout status deployment/${APP_NAME} --timeout=${ROLL_TIMEOUT}s
+
+# 3️⃣ Continuous curl requests to test for downtime
+echo ""
+echo "Testing for downtime..."
+echo "Sending requests to ${CHECK_URL} every ${ROLL_CHECK_INTERVAL}s for ${ROLL_TIMEOUT}s total."
+echo "Press Ctrl+C to stop early."
+echo ""
+
+start_time=$(date +%s)
+end_time=$((start_time + ROLL_TIMEOUT))
+success_count=0
+fail_count=0
+
+while [ "$(date +%s)" -lt $end_time ]; do
+  if curl -s --max-time 2 -o /dev/null -w "%{http_code}" "${CHECK_URL}" | grep -q "200"; then
+    echo "$(date '+%H:%M:%S') App responded (200 OK)"
+    ((success_count++))
+  else
+    echo "$(date '+%H:%M:%S') No response or error"
+    ((fail_count++))
+  fi
+  sleep ${ROLL_CHECK_INTERVAL}
+done
+
+echo ""
+echo "Curl test summary: ${success_count} successful, ${fail_count} failed."
+
+# 4️⃣ Verify current pods
+echo ""
+echo "Verifying running pods after rollout..."
+kubectl get pods -l app=${APP_NAME} -o wide
+
+echo ""
+echo "Rolling update completed and verified."
+if [ ${fail_count} -eq 0 ]; then
+  echo "No downtime detected during rollout!"
+else
+  echo "Some downtime detected. Review logs below:"
+  kubectl logs -l app=${APP_NAME} --tail=50
+fi
+
+echo ""
+echo "Done."

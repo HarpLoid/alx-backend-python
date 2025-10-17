@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: messaging-app
-        image: messaging_app:blue
+        image: messaging_app:v2.0
         imagePullPolicy: IfNotPresent
         resources:
           requests:
