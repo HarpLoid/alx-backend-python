@@ -26,9 +26,9 @@ pipeline {
                 echo 'Setting up Virtual Environment'
                 sh '''
                    python3 -m venv messaging_app/${VENV}
-                    . messaging_app/$VENV/bin/activate
-                    pip3 install --upgrade pip
-                    pip3 install -r messaging_app/requirements.txt 
+                   . messaging_app/$VENV/bin/activate
+                   pip3 install --upgrade pip
+                   pip3 install -r messaging_app/requirements.txt 
                 '''
             }
         }
