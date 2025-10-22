@@ -1,0 +1,93 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV = 'venv'
+        REPORT_DIR = 'reports'
+        REPO_URL = 'git@github.com:HarpLoid/alx-backend-python.git'
+        APP_DIR = 'messaging_app'
+        BRANCH_NAME = 'main'
+        IMAGE_NAME = 'harploid/messaging_app'
+    }
+
+    stages{
+        stage('Pulls code from GitHub'){
+            steps{
+                echo 'Sparse checkout for messaging app...'
+                
+                git branch: "${BRANCH_NAME}",
+                    url: "${REPO_URL}",
+                    credentialsId: 'github-ssh'
+            }
+        }
+
+        stage('Set up Python environment') {
+            steps {
+                echo 'Setting up Virtual Environment'
+                sh '''
+                   python3 -m venv messaging_app/${VENV}
+                    . messaging_app/$VENV/bin/activate
+                    pip3 install --upgrade pip
+                    pip3 install -r messaging_app/requirements.txt 
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir("${APP_DIR}") {
+                    echo 'Running pytest...'
+                    sh '''
+                        . $VENV/bin/activate
+                        mkdir -p $REPORT_DIR
+                        pytest --junitxml=$REPORT_DIR/test-results.xml --maxfail=1 --disable-warnings -v
+                    '''
+                }
+            }
+        }
+
+        stage('Publish Test Report') {
+            steps {
+                echo 'Publishing test report...'
+                junit allowEmptyResults: true, testResults: "${APP_DIR}/${REPORT_DIR}/test-results.xml"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir("${APP_DIR}") {
+                    echo "Building Docker image: ${IMAGE_NAME}"
+                    sh '''
+                        docker build -t ${IMAGE_NAME} .
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Pushing Docker image to registry...'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:latest
+                        docker logout
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            sh 'rm -rf ${APP_DIR}/${VENV} || true'
+        }
+        success {
+            echo 'Messaging app pipeline completed successfully!'
+        }
+        failure {
+            echo 'Messaging app pipeline failed. Check the test results.'
+        }
+    }
+}
