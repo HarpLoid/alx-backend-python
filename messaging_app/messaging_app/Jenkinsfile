@@ -5,7 +5,7 @@ pipeline {
         VENV = 'venv'
         REPORT_DIR = 'reports'
         REPO_URL = 'git@github.com:HarpLoid/alx-backend-python.git'
-        APP_DIR = 'messaging-app'
+        APP_DIR = 'messaging_app'
         BRANCH_NAME = 'main'
     }
 
@@ -13,23 +13,22 @@ pipeline {
         stage('Pulls code from GitHub'){
             steps{
                 echo 'Sparse checkout for messaging app...'
-                sshagent(credential: ['github-ssh']) {
-                    git branch: "${BRANCH_NAME}", url: "${REPO_URL}"
-                }
+                
+                git branch: "${BRANCH_NAME}",
+                    url: "${REPO_URL}",
+                    credentialsId: 'github-ssh'
             }
         }
 
         stage('Set up Python environment') {
             steps {
-                dir("${APP_DIR}"){
-                    echo 'Setting up Virtual Environment'
-                    sh '''
-                       python3 -m venv $VENV
-                        . $VENV/bin/activate
-                        pip install --upgrade pip
-                        pip install -r requirements.txt 
-                    '''
-                }
+                echo 'Setting up Virtual Environment'
+                sh '''
+                   python3 -m venv messaging_app/${VENV}
+                    . messaging_app/$VENV/bin/activate
+                    pip3 install --upgrade pip
+                    pip3 install -r messaging_app/requirements.txt 
+                '''
             }
         }
 
