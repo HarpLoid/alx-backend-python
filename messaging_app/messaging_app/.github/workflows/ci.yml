@@ -49,6 +49,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r messaging_app/requirements.txt
+          pip install flake8 coverage
+    
+      - name: Run flake8 Linting
+        run: |
+          echo "🔍 Running flake8 linting..."
+          # Stop the build if there are Python syntax or style issues
+          flake8 messaging_app --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit non-zero if there are any linting errors (style violations)
+          flake8 messaging_app --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+        continue-on-error: false
 
       - name: Wait for MySQL to be ready
         run: |
@@ -66,6 +76,14 @@ jobs:
         run: |
           python messaging_app/manage.py migrate --noinput
 
-      - name: Run Django tests
+      - name: Run Django tests with coverage
         run: |
-          python messaging_app/manage.py test --verbosity=2
+          coverage run --source=messaging_app manage.py test messaging_app
+          coverage report -m
+          coverage html
+
+      - name: Upload coverage report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
